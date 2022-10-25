@@ -28,6 +28,46 @@ class LinearOscilator implements Oscilator {
 	}
 }
 
+class SineOscilator implements Oscilator {
+	private readonly oscilator: LinearOscilator;
+
+	constructor(periodRatio: number, frequency: number) {
+		this.oscilator = new LinearOscilator(periodRatio, frequency);
+	}
+
+	setFrequency(frequency: number): void {
+		this.oscilator.setFrequency(frequency);
+	}
+
+	getNextSample(sampleRate: number): number {
+		return Math.sin(this.oscilator.getNextSample(sampleRate) * Math.PI * 2);
+	}
+}
+
+class VibratoOscilator implements Oscilator {
+	private readonly oscilator: Oscilator;
+	private readonly lfo: Oscilator;
+	private baseFrequency: number;
+
+	constructor(periodRatio: number, frequency: number) {
+		this.oscilator = new LinearOscilator(periodRatio, frequency);
+		this.lfo = new SineOscilator(0, 5);
+		this.baseFrequency = frequency;
+	}
+
+	setFrequency(frequency: number): void {
+		this.baseFrequency = frequency;
+	}
+
+	getNextSample(sampleRate: number): number {
+		this.oscilator.setFrequency(
+			this.baseFrequency +
+				(this.lfo.getNextSample(sampleRate) * this.baseFrequency) / 100
+		);
+		return this.oscilator.getNextSample(sampleRate);
+	}
+}
+
 class GeneratorProcessor extends AudioWorkletProcessor {
 	readonly sampleRate: number;
 	toneOscilator: Oscilator | undefined;
@@ -41,7 +81,7 @@ class GeneratorProcessor extends AudioWorkletProcessor {
 		this.sampleRate = processorOptions.sampleRate;
 		this.port.onmessage = (event: MessageEvent<MidiMessage>): void => {
 			if (event.data.type === "noteon") {
-				this.toneOscilator = new LinearOscilator(
+				this.toneOscilator = new VibratoOscilator(
 					0,
 					frequencyFromMidiNoteNumber(event.data.number)
 				);
