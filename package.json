@@ -11,5 +11,10 @@
   "devDependencies": {
     "typescript": "^4.6.4",
     "vite": "^3.1.0"
+  },
+  "dependencies": {
+    "@types/audioworklet": "^0.0.33",
+    "@types/webmidi": "^2.0.6",
+    "i": "^0.3.7"
   }
 }
