@@ -1,3 +1,4 @@
+import { Envelope, SimpleEnvelope } from "./envelope";
 import { MidiMessage } from "./midi-message";
 import { customSynthProcessorKey } from "./processor-keys";
 
@@ -71,6 +72,7 @@ class VibratoOscilator implements Oscilator {
 class GeneratorProcessor extends AudioWorkletProcessor {
 	readonly sampleRate: number;
 	toneOscilator: Oscilator | undefined;
+	envelope: Envelope | undefined;
 
 	constructor({
 		processorOptions,
@@ -85,9 +87,19 @@ class GeneratorProcessor extends AudioWorkletProcessor {
 					0,
 					frequencyFromMidiNoteNumber(event.data.number)
 				);
+				this.envelope = new SimpleEnvelope({
+					// attack: 0.05,
+					// decay: 0.5,
+					// sustainLevel: 0.75,
+					// release: 0.5,
+					attack: 1,
+					decay: 2,
+					sustainLevel: 0.75,
+					release: 1,
+				});
 			}
 			if (event.data.type === "noteoff") {
-				this.toneOscilator = undefined;
+				this.envelope?.setNoteOff();
 			}
 		};
 	}
@@ -97,7 +109,7 @@ class GeneratorProcessor extends AudioWorkletProcessor {
 		outputs: Float32Array[][],
 		_parameters: Record<string, Float32Array>
 	) {
-		if (this.toneOscilator === undefined) {
+		if (this.toneOscilator === undefined || this.envelope == undefined) {
 			return true;
 		}
 
@@ -107,8 +119,10 @@ class GeneratorProcessor extends AudioWorkletProcessor {
 		}
 
 		for (let i = 0; i < channel.length; i++) {
-			const sample = this.toneOscilator.getNextSample(this.sampleRate);
-			channel[i] = sample * 0.3;
+			channel[i] =
+				this.toneOscilator.getNextSample(this.sampleRate) *
+				this.envelope.getNextSample(this.sampleRate) *
+				0.3;
 		}
 
 		return true;
