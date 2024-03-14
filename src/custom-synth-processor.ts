@@ -20,12 +20,12 @@ class LinearOscilator implements Oscilator {
 	}
 
 	setFrequency(frequency: number): void {
-		this.samplesPerPeriod = Math.floor(this.sampleRate / frequency);
+		this.samplesPerPeriod = this.sampleRate / frequency;
 	}
 
 	getNextSample(): number {
 		if (this.currentSample >= this.samplesPerPeriod) {
-			this.currentSample = 0;
+			this.currentSample -= this.samplesPerPeriod;
 		}
 
 		const result = this.currentSample / this.samplesPerPeriod;
