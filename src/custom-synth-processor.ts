@@ -14,11 +14,7 @@ interface Oscilator {
 class LinearOscilator implements Oscilator {
 	private currentSample: number = 0;
 
-	constructor(
-		private sampleRate: number,
-		private periodRatio: number,
-		private frequency: number
-	) {}
+	constructor(private sampleRate: number, private frequency: number) {}
 
 	setFrequency(frequency: number): void {
 		this.frequency = frequency;
@@ -41,12 +37,8 @@ class LinearOscilator implements Oscilator {
 class SineOscilator implements Oscilator {
 	private readonly oscilator: LinearOscilator;
 
-	constructor(sampleRate: number, periodRatio: number, frequency: number) {
-		this.oscilator = new LinearOscilator(
-			sampleRate,
-			periodRatio,
-			frequency
-		);
+	constructor(sampleRate: number, frequency: number) {
+		this.oscilator = new LinearOscilator(sampleRate, frequency);
 	}
 
 	setFrequency(frequency: number): void {
@@ -63,13 +55,9 @@ class VibratoOscilator implements Oscilator {
 	private readonly lfo: Oscilator;
 	private baseFrequency: number;
 
-	constructor(sampleRate: number, periodRatio: number, frequency: number) {
-		this.oscilator = new LinearOscilator(
-			sampleRate,
-			periodRatio,
-			frequency
-		);
-		this.lfo = new SineOscilator(sampleRate, 0, 5);
+	constructor(sampleRate: number, frequency: number) {
+		this.oscilator = new LinearOscilator(sampleRate, frequency);
+		this.lfo = new SineOscilator(sampleRate, 5);
 		this.baseFrequency = frequency;
 	}
 
@@ -102,7 +90,6 @@ class GeneratorProcessor extends AudioWorkletProcessor {
 			if (event.data.type === "noteon") {
 				this.toneOscilator = new VibratoOscilator(
 					this.sampleRate,
-					0,
 					frequencyFromMidiNoteNumber(event.data.number)
 				);
 				this.envelope = new SimpleEnvelope({
