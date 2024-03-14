@@ -103,22 +103,28 @@ class GeneratorProcessor extends AudioWorkletProcessor {
 	}) {
 		super();
 		this.sampleRate = processorOptions.sampleRate;
+		this.toneOscilator = new VibratoOscilator(
+			this.sampleRate,
+			frequencyFromMidiNoteNumber(10)
+		);
 		this.port.onmessage = (event: MessageEvent<MidiMessage>): void => {
 			if (event.data.type === "noteon") {
-				this.toneOscilator = new VibratoOscilator(
-					this.sampleRate,
+				this.toneOscilator?.setFrequency(
 					frequencyFromMidiNoteNumber(event.data.number)
 				);
-				this.envelope = new SimpleEnvelope({
-					// attack: 0.05,
-					// decay: 0.5,
-					// sustainLevel: 0.75,
-					// release: 0.5,
-					attack: 1,
-					decay: 2,
-					sustainLevel: 0.75,
-					release: 1,
-				});
+				this.envelope = new SimpleEnvelope(
+					{
+						// attack: 0.05,
+						// decay: 0.5,
+						// sustainLevel: 0.75,
+						// release: 0.5,
+						attack: 1,
+						decay: 2,
+						sustainLevel: 0.75,
+						release: 1,
+					},
+					this.envelope?.getNextSample(this.sampleRate)
+				);
 			}
 			if (event.data.type === "noteoff") {
 				this.envelope?.setNoteOff();

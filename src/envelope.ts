@@ -35,7 +35,7 @@ function easeOut(
 export class SimpleEnvelope implements Envelope {
 	private state: EnvelopeState;
 
-	constructor(private envelope: EnvelopeValues) {
+	constructor(private envelope: EnvelopeValues, private startValue = 0) {
 		this.state = {
 			value: 0,
 			stage: "attack",
@@ -54,7 +54,7 @@ export class SimpleEnvelope implements Envelope {
 		switch (this.state.stage) {
 			case "attack": {
 				const newValue = easeOut(
-					0,
+					this.startValue,
 					1,
 					this.state.timeLeftOfStage,
 					this.envelope.attack,
