@@ -8,20 +8,24 @@ function frequencyFromMidiNoteNumber(noteNumber: number): number {
 
 interface Oscilator {
 	setFrequency(frequency: number): void;
-	getNextSample(sampleRate: number): number;
+	getNextSample(): number;
 }
 
 class LinearOscilator implements Oscilator {
 	private currentSample: number = 0;
 
-	constructor(private periodRatio: number, private frequency: number) {}
+	constructor(
+		private sampleRate: number,
+		private periodRatio: number,
+		private frequency: number
+	) {}
 
 	setFrequency(frequency: number): void {
 		this.frequency = frequency;
 	}
 
-	getNextSample(sampleRate: number): number {
-		const samplesPerPeriod = Math.floor(sampleRate / this.frequency);
+	getNextSample(): number {
+		const samplesPerPeriod = Math.floor(this.sampleRate / this.frequency);
 
 		if (this.currentSample >= samplesPerPeriod) {
 			this.currentSample = 0;
@@ -37,16 +41,20 @@ class LinearOscilator implements Oscilator {
 class SineOscilator implements Oscilator {
 	private readonly oscilator: LinearOscilator;
 
-	constructor(periodRatio: number, frequency: number) {
-		this.oscilator = new LinearOscilator(periodRatio, frequency);
+	constructor(sampleRate: number, periodRatio: number, frequency: number) {
+		this.oscilator = new LinearOscilator(
+			sampleRate,
+			periodRatio,
+			frequency
+		);
 	}
 
 	setFrequency(frequency: number): void {
 		this.oscilator.setFrequency(frequency);
 	}
 
-	getNextSample(sampleRate: number): number {
-		return Math.sin(this.oscilator.getNextSample(sampleRate) * Math.PI * 2);
+	getNextSample(): number {
+		return Math.sin(this.oscilator.getNextSample() * Math.PI * 2);
 	}
 }
 
@@ -55,9 +63,13 @@ class VibratoOscilator implements Oscilator {
 	private readonly lfo: Oscilator;
 	private baseFrequency: number;
 
-	constructor(periodRatio: number, frequency: number) {
-		this.oscilator = new LinearOscilator(periodRatio, frequency);
-		this.lfo = new SineOscilator(0, 5);
+	constructor(sampleRate: number, periodRatio: number, frequency: number) {
+		this.oscilator = new LinearOscilator(
+			sampleRate,
+			periodRatio,
+			frequency
+		);
+		this.lfo = new SineOscilator(sampleRate, 0, 5);
 		this.baseFrequency = frequency;
 	}
 
@@ -65,12 +77,12 @@ class VibratoOscilator implements Oscilator {
 		this.baseFrequency = frequency;
 	}
 
-	getNextSample(sampleRate: number): number {
+	getNextSample(): number {
 		this.oscilator.setFrequency(
 			this.baseFrequency +
-				(this.lfo.getNextSample(sampleRate) * this.baseFrequency) / 100
+				(this.lfo.getNextSample() * this.baseFrequency) / 100
 		);
-		return this.oscilator.getNextSample(sampleRate);
+		return this.oscilator.getNextSample();
 	}
 }
 
@@ -89,6 +101,7 @@ class GeneratorProcessor extends AudioWorkletProcessor {
 		this.port.onmessage = (event: MessageEvent<MidiMessage>): void => {
 			if (event.data.type === "noteon") {
 				this.toneOscilator = new VibratoOscilator(
+					this.sampleRate,
 					0,
 					frequencyFromMidiNoteNumber(event.data.number)
 				);
@@ -125,7 +138,7 @@ class GeneratorProcessor extends AudioWorkletProcessor {
 
 		for (let i = 0; i < channel.length; i++) {
 			channel[i] =
-				this.toneOscilator.getNextSample(this.sampleRate) *
+				this.toneOscilator.getNextSample() *
 				this.envelope.getNextSample(this.sampleRate) *
 				0.3;
 		}
