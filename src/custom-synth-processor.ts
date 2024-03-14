@@ -51,13 +51,29 @@ class SineOscilator implements Oscilator {
 	}
 }
 
+class SquareOscilator implements Oscilator {
+	private readonly oscilator: LinearOscilator;
+
+	constructor(sampleRate: number, frequency: number) {
+		this.oscilator = new LinearOscilator(sampleRate, frequency);
+	}
+
+	setFrequency(frequency: number): void {
+		this.oscilator.setFrequency(frequency);
+	}
+
+	getNextSample(): number {
+		return Math.round(this.oscilator.getNextSample());
+	}
+}
+
 class VibratoOscilator implements Oscilator {
 	private readonly oscilator: Oscilator;
 	private readonly lfo: Oscilator;
 	private baseFrequency: number;
 
 	constructor(sampleRate: number, frequency: number) {
-		this.oscilator = new LinearOscilator(sampleRate, frequency);
+		this.oscilator = new SquareOscilator(sampleRate, frequency);
 		this.lfo = new SineOscilator(sampleRate, 5);
 		this.baseFrequency = frequency;
 	}
