@@ -13,21 +13,22 @@ interface Oscilator {
 
 class LinearOscilator implements Oscilator {
 	private currentSample: number = 0;
+	private samplesPerPeriod: number = 0;
 
-	constructor(private sampleRate: number, private frequency: number) {}
+	constructor(private sampleRate: number, frequency: number) {
+		this.setFrequency(frequency);
+	}
 
 	setFrequency(frequency: number): void {
-		this.frequency = frequency;
+		this.samplesPerPeriod = Math.floor(this.sampleRate / frequency);
 	}
 
 	getNextSample(): number {
-		const samplesPerPeriod = Math.floor(this.sampleRate / this.frequency);
-
-		if (this.currentSample >= samplesPerPeriod) {
+		if (this.currentSample >= this.samplesPerPeriod) {
 			this.currentSample = 0;
 		}
 
-		const result = this.currentSample / samplesPerPeriod;
+		const result = this.currentSample / this.samplesPerPeriod;
 		this.currentSample += 1;
 
 		return result;
